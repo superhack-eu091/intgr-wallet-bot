@@ -1,0 +1,9 @@
+{
+	"browse_nft": "Browse NFTs on following chains",
+	"browse_chain": {
+		"zora": "Browse Zora",
+		"base": "Browse Base",
+		"opt": "Browse Optimism"
+	},
+	"top_nfts_description": "Please select a time frame to view the top 10 trending NFTs on {chain}!"
+}
