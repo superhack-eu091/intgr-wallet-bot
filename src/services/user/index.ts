@@ -6,4 +6,24 @@ export class UserService {
 
 		if (!userObj) userModel.create({ telegram: user });
 	};
+
+	static setSelectedChain = async (
+		tgId: number,
+		selectedChain: "opt" | "base" | "zora"
+	) => {
+		await userModel.findOneAndUpdate(
+			{ telegram: { id: tgId } },
+			{ $set: { selected_chain: selectedChain } }
+		);
+	};
+
+	static setSelectedTimeline = async (
+		tgId: number,
+		selectedTimeline: "1h" | "6h" | "24h"
+	) => {
+		await userModel.findOneAndUpdate(
+			{ telegram: { id: tgId } },
+			{ $set: { selected_timeline: selectedTimeline } }
+		);
+	};
 }

@@ -9,6 +9,8 @@ export type IUser = {
 		language_code?: string;
 		username?: string;
 	};
+	selected_chain?: "opt" | "base" | "zora";
+	selected_timeline?: "1h" | "6h" | "24h";
 };
 
 const userSchema = new mongoose.Schema<IUser>({
@@ -35,6 +37,14 @@ const userSchema = new mongoose.Schema<IUser>({
 			type: String,
 			unique: true,
 		},
+	},
+	selected_chain: {
+		type: String,
+		enum: ["opt", "base", "zora"],
+	},
+	selected_timeline: {
+		type: String,
+		enum: ["1h", "6h", "24h"],
 	},
 });
 

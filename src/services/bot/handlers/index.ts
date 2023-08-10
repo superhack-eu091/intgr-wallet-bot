@@ -4,6 +4,9 @@ import {
 	handleBrowseBase,
 	handleBrowseOpt,
 	handleBrowseZora,
+	handleTimeline1h,
+	handleTimeline24h,
+	handleTimeline6h,
 	startCallbackHandler,
 } from "./callbacks";
 import { startCommandHandler } from "./commands";
@@ -32,6 +35,9 @@ const botConfig: BotConfig = {
 		BROWSE_BASE: handleBrowseBase,
 		BROWSE_ZORA: handleBrowseZora,
 		BROWSE_OPT: handleBrowseOpt,
+		TIMELINE_1h: handleTimeline1h,
+		TIMELINE_6h: handleTimeline6h,
+		TIMELINE_24h: handleTimeline24h,
 	},
 };
 
