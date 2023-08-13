@@ -82,6 +82,13 @@ const handleTimeline = async (
 		);
 	};
 
+	const inlineKeyboard = new InlineKeyboard()
+		.text(content.mint_nfts_cta, CALLBACKS.MINT_NFT)
+		.row()
+		.text(content.more_info_cta, CALLBACKS.MORE_INFO)
+		.row()
+		.text(content.skip_cta, CALLBACKS.SKIP_NFT);
+
 	// TODO
 	const trendingNfts = [{}, {}, {}, {}, {}];
 
@@ -91,6 +98,33 @@ const handleTimeline = async (
 				trendingNfts.map(getCollectionDescription).join("\n\n"),
 			"{timeline}",
 			timeline
-		)
+		),
+		{
+			reply_markup: inlineKeyboard,
+		}
 	);
+};
+
+export const handleMintNft = async (ctx: CallbackQueryContext<Context>) => {
+	ctx.reply(content.mint_nft_message);
+};
+
+export const handleMoreInfo = async (ctx: CallbackQueryContext<Context>) => {
+	ctx.reply("// Should display more info");
+};
+
+export const handleSkip = async (ctx: CallbackQueryContext<Context>) => {
+	ctx.reply("// Should skip");
+};
+
+export const handleConfirmSelection = async (
+	ctx: CallbackQueryContext<Context>
+) => {
+	console.log("--confirm selection", ctx.from.username);
+};
+
+export const handleEditSelection = async (
+	ctx: CallbackQueryContext<Context>
+) => {
+	ctx.reply(content.edit_selection_text);
 };

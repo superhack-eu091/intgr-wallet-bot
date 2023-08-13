@@ -8,4 +8,7 @@ export const CALLBACKS: Record<Partial<Callback>, Partial<Callback>> = {
 	TIMELINE_1h: "TIMELINE_1h",
 	TIMELINE_6h: "TIMELINE_6h",
 	TIMELINE_24h: "TIMELINE_24h",
+	MINT_NFT: "MINT_NFT",
+	MORE_INFO: "MORE_INFO",
+	SKIP_NFT: "SKIP_NFT",
 };

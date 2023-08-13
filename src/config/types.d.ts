@@ -6,4 +6,7 @@ export type Callback =
 	| "BROWSE_OPT"
 	| "TIMELINE_1h"
 	| "TIMELINE_6h"
-	| "TIMELINE_24h";
+	| "TIMELINE_24h"
+	| "MINT_NFT"
+	| "MORE_INFO"
+	| "SKIP_NFT";

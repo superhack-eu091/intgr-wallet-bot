@@ -1,2 +1,8 @@
 {
+	"selected_base": "You selected",
+	"selected_review_template": "\n\n{quantity} NFTs from {collection}",
+	"cta": {
+		"confirm_selection": "Confirm Selection",
+		"edit_selection": "Edit Selection"
+	}
 }

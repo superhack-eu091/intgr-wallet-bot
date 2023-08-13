@@ -4,12 +4,16 @@ import {
 	handleBrowseBase,
 	handleBrowseOpt,
 	handleBrowseZora,
+	handleMintNft,
+	handleMoreInfo,
+	handleSkip,
 	handleTimeline1h,
 	handleTimeline24h,
 	handleTimeline6h,
 	startCallbackHandler,
 } from "./callbacks";
 import { startCommandHandler } from "./commands";
+import { handleMessages } from "./messages";
 
 type BotConfig = {
 	messageHandler: (ctx: Context) => Promise<void>;
@@ -24,9 +28,7 @@ type BotConfig = {
 };
 
 const botConfig: BotConfig = {
-	messageHandler: async (ctx) => {
-		console.log("--type", ctx.chat?.type);
-	},
+	messageHandler: handleMessages,
 	commandHandlers: {
 		start: startCommandHandler,
 	},
@@ -38,6 +40,9 @@ const botConfig: BotConfig = {
 		TIMELINE_1h: handleTimeline1h,
 		TIMELINE_6h: handleTimeline6h,
 		TIMELINE_24h: handleTimeline24h,
+		MINT_NFT: handleMintNft,
+		MORE_INFO: handleMoreInfo,
+		SKIP_NFT: handleSkip,
 	},
 };
 
