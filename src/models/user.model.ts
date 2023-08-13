@@ -9,7 +9,9 @@ export type IUser = {
 		language_code?: string;
 		username?: string;
 	};
-	selected_chain?: "opt" | "base" | "zora";
+	selected_chain?: "opt" | "base" | "zora" | "eth";
+	safe_wallet_address?: string;
+	delegate_contract_address?: string;
 };
 
 const userSchema = new mongoose.Schema<IUser>({
@@ -39,7 +41,13 @@ const userSchema = new mongoose.Schema<IUser>({
 	},
 	selected_chain: {
 		type: String,
-		enum: ["opt", "base", "zora"],
+		enum: ["opt", "base", "zora", "eth"],
+	},
+	safe_wallet_address: {
+		type: String,
+	},
+	delegate_contract_address: {
+		type: String,
 	},
 });
 

@@ -8,6 +8,8 @@ export const startCommandHandler = async (
 ): Promise<void> => {
 	const tgUser = ctx.from;
 
+	console.log(tgUser);
+
 	if (!tgUser || tgUser.is_bot) {
 		ctx.reply(content.no_bot_message);
 		return;

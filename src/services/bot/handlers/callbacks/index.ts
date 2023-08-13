@@ -2,8 +2,38 @@ import { CallbackQueryContext, Context, InlineKeyboard } from "grammy";
 
 import _ from "lodash";
 import { CALLBACKS } from "../../../../config/supported-commands";
+import { availableNfts } from "../../../../utils/config";
+import { DelegateContract } from "../../../../utils/contracts/delegate/Delegate";
 import { UserService } from "../../../user";
 import content from "./content.json";
+
+export const createWalletHandler = async (
+	ctx: CallbackQueryContext<Context>
+) => {
+	const user = await UserService.getUser(ctx.from?.id);
+
+	if (!user) return;
+
+	if (!user?.delegate_contract_address) {
+		ctx.reply("please wait while we deploy delegation contract...");
+
+		const delegateContract = await DelegateContract.deploy(user.selected_chain);
+
+		user.delegate_contract_address = delegateContract.address;
+
+		await user.save();
+	}
+
+	console.log("--delegateContract", user?.delegate_contract_address);
+
+	ctx.reply(
+		_.replace(
+			content.paste_safe_wallet,
+			"{delegate_addr}",
+			`\`${user.delegate_contract_address}\``
+		)
+	);
+};
 
 export const startCallbackHandler = async (
 	ctx: CallbackQueryContext<Context>
@@ -13,7 +43,9 @@ export const startCallbackHandler = async (
 		.row()
 		.text(content.browse_chain.base, CALLBACKS.BROWSE_BASE)
 		.row()
-		.text(content.browse_chain.zora, CALLBACKS.BROWSE_ZORA);
+		.text(content.browse_chain.zora, CALLBACKS.BROWSE_ZORA)
+		.row()
+		.text(content.browse_chain.eth, CALLBACKS.BROWSE_ETH);
 
 	ctx.reply(content.browse_nft, { reply_markup: inlineKeyboard });
 };
@@ -30,78 +62,39 @@ export const handleBrowseZora = async (ctx: CallbackQueryContext<Context>) => {
 	await handleBrowse(ctx, "zora");
 };
 
+export const handleBrowseEth = async (ctx: CallbackQueryContext<Context>) => {
+	await handleBrowse(ctx, "eth");
+};
+
 const handleBrowse = async (
 	ctx: CallbackQueryContext<Context>,
-	chain: "opt" | "zora" | "base"
+	chain: "opt" | "zora" | "base" | "eth"
 ) => {
 	await UserService.setSelectedChain(ctx.from.id, chain);
 
-	const inlineKeyboard = new InlineKeyboard()
-		.text(content.time_lines["1h"], CALLBACKS.TIMELINE_1h)
-		.row()
-		.text(content.time_lines["6h"], CALLBACKS.TIMELINE_6h)
-		.row()
-		.text(content.time_lines["24h"], CALLBACKS.TIMELINE_24h)
-		.row();
-
-	ctx.reply(_.replace(content.top_nfts_description, "{chain}", chain), {
-		reply_markup: inlineKeyboard,
-	});
-};
-
-export const handleTimeline1h = async (ctx: CallbackQueryContext<Context>) => {
-	await handleTimeline(ctx, "1h");
-};
-
-export const handleTimeline6h = async (ctx: CallbackQueryContext<Context>) => {
-	await handleTimeline(ctx, "6h");
-};
-
-export const handleTimeline24h = async (ctx: CallbackQueryContext<Context>) => {
-	await handleTimeline(ctx, "24h");
-};
-
-const handleTimeline = async (
-	ctx: CallbackQueryContext<Context>,
-	timeline: "1h" | "6h" | "24h"
-) => {
-	await UserService.setSelectedTimeline(ctx.from.id, timeline);
-
-	const getCollectionDescription = (
-		_collectionData: {},
-		index: number
-	): string => {
-		return _.replace(
-			_.replace(
-				content.collection_data_format,
-				"{index}",
-				(index + 1).toString()
-			),
-			"{timeline}",
-			timeline
-		);
-	};
-
-	const inlineKeyboard = new InlineKeyboard()
-		.text(content.mint_nfts_cta, CALLBACKS.MINT_NFT)
-		.row()
-		.text(content.more_info_cta, CALLBACKS.MORE_INFO)
-		.row()
-		.text(content.skip_cta, CALLBACKS.SKIP_NFT);
-
-	// TODO
-	const trendingNfts = [{}, {}, {}, {}, {}];
-
 	ctx.reply(
-		_.replace(
-			content.trending_description +
-				trendingNfts.map(getCollectionDescription).join("\n\n"),
-			"{timeline}",
-			timeline
-		),
-		{
-			reply_markup: inlineKeyboard,
-		}
+		content.top_nfts_description +
+			Object.values(availableNfts[chain] as any)
+				.map((nft: any, ind: number) =>
+					_.replace(
+						_.replace(
+							_.replace(
+								_.replace(
+									content.collection_data_format,
+									"{index}",
+									ind.toString()
+								),
+								"{name}",
+								nft.name
+							),
+							"{price}",
+							nft.price
+						),
+						"{id}",
+						`${nft.contractAddress}-${nft.tokenId}`
+					)
+				)
+				.join("")
 	);
 };
 
@@ -115,16 +108,4 @@ export const handleMoreInfo = async (ctx: CallbackQueryContext<Context>) => {
 
 export const handleSkip = async (ctx: CallbackQueryContext<Context>) => {
 	ctx.reply("// Should skip");
-};
-
-export const handleConfirmSelection = async (
-	ctx: CallbackQueryContext<Context>
-) => {
-	console.log("--confirm selection", ctx.from.username);
-};
-
-export const handleEditSelection = async (
-	ctx: CallbackQueryContext<Context>
-) => {
-	ctx.reply(content.edit_selection_text);
 };

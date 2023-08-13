@@ -1,7 +1,13 @@
 import { Context, InlineKeyboard } from "grammy";
 import _ from "lodash";
 
-import content from "./content.json";
+import { ethers } from "ethers";
+import { userModel } from "../../../../models/user.model";
+import { getBotWallet } from "../../../../utils/bot-wallet.utils";
+
+import { availableNfts, getMockAddress } from "../../../../utils/config";
+import delegateAbi from "../../../../utils/contracts/delegate/artifacts/abi.json";
+import { UserService } from "../../../user";
 
 export const handleMessages = async (ctx: Context) => {
 	const messageText = ctx.message?.text;
@@ -17,59 +23,80 @@ export const handleMessages = async (ctx: Context) => {
 		""
 	);
 
-	if (/\(.,.\)[,]*/.test(trimmedMessage)) {
-		handleNftChoiceSelection(ctx, trimmedMessage);
+	if (/.*-.*/.test(trimmedMessage)) {
+		await handleNftChoiceSelection(ctx, trimmedMessage);
 		return;
 	}
 
-	ctx.reply("Incorrect format");
+	await handleSafeWallet(ctx, trimmedMessage);
+
+	// ctx.reply("Incorrect format");
 	return;
 };
 
-const handleNftChoiceSelection = (ctx: Context, trimmedMessage: string) => {
-	const selectedCollections: { collectionInd: string; quantity: string }[] = [];
+const handleSafeWallet = async (ctx: Context, trimmedMessage: string) => {
+	const user = await UserService.getUser(ctx.from?.id ?? 0);
 
-	const regExp = /(\(.,.\))/g;
+	if (!user) return;
 
-	let data = regExp.exec(trimmedMessage);
+	user.safe_wallet_address = trimmedMessage;
 
-	while (data !== null) {
-		console.log(data[0]);
+	await user.save();
 
-		const regExp1 = /\((.),(.)\)/g;
+	ctx.reply("Wallet saved successfully", {
+		reply_markup: new InlineKeyboard().text(
+			"Browse NFTs",
+			`BROWSE_${user.selected_chain?.toUpperCase()}`
+		),
+	});
+};
 
-		let [, collectionInd, quantity] = regExp1.exec(data[0]) ?? [];
+const handleNftChoiceSelection = async (
+	ctx: Context,
+	trimmedMessage: string
+) => {
+	const user = await userModel.findOne({ "telegram.id": ctx.from?.id });
 
-		if (!collectionInd || !quantity) {
-			ctx.reply("Something Went Wrong!");
-			return;
-		}
+	console.log(user, ctx.from?.id);
 
-		selectedCollections.push({ collectionInd, quantity });
+	if (!user || !user.selected_chain) return;
 
-		data = regExp.exec(trimmedMessage);
+	if (!user.safe_wallet_address || !user.delegate_contract_address) {
+		const inlineKeyboard = new InlineKeyboard().text(
+			"Create Wallet",
+			"CREATE_WALLET"
+		);
+
+		ctx.reply("No wallet detected", { reply_markup: inlineKeyboard });
+		return;
 	}
 
-	const inlineKeyboard = new InlineKeyboard()
-		.text(content.cta.confirm_selection)
-		.row()
-		.text(content.cta.edit_selection);
+	const [address, tokenId] = trimmedMessage.split("-");
 
-	ctx.reply(
-		content.selected_base +
-			selectedCollections.map((collection) =>
-				_.replace(
-					_.replace(
-						content.selected_review_template,
-						"{collection}",
-						collection.collectionInd
-					),
-					"{quantity}",
-					collection.quantity
-				)
-			),
-		{
-			reply_markup: inlineKeyboard,
-		}
+	const botSigner = getBotWallet(user.selected_chain);
+
+	const contract = new ethers.Contract(
+		user.delegate_contract_address,
+		delegateAbi,
+		botSigner
 	);
+
+	const purchaseArgs = [
+		user.safe_wallet_address,
+		address,
+		tokenId,
+		(availableNfts[user.selected_chain]?.[trimmedMessage] as any).price,
+		getMockAddress(user.selected_chain),
+	];
+
+	console.log(purchaseArgs);
+
+	ctx.reply("Please wait while we mint the NFT...");
+
+	const tx = await contract.functions["buyNFT"]?.(...purchaseArgs);
+
+	await tx.wait();
+
+	ctx.reply(`NFT purchased in transaction ${tx.hash}`);
+	ctx.reply("Mint Successful");
 };
